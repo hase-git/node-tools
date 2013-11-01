@@ -1,0 +1,15 @@
+#!/usr/local/bin/node
+var fs = require('fs');
+var word = process.argv[2];
+
+var spawn = require('child_process').spawn;
+var find = spawn('find', [__dirname, '-type', 'f', '!', '-path', "./.git/*", "-print"]);
+var xargs = spawn('xargs', ['grep', word]);
+find.stdout.pipe(xargs.stdin);
+var data = '';
+xargs.stdout.on('data', function(chunk) {
+  data += chunk;
+});
+xargs.on('close', function() {
+  console.log(String(data));
+});
