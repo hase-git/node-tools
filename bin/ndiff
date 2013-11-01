@@ -1,0 +1,35 @@
+#!/usr/local/bin/node
+/**
+* json diff
+* require packages
+*  - diff
+*  - colordiff
+**/
+
+var spawn = require('child_process').spawn;
+var path = require('path');
+var fs = require('fs');
+var f1 = path.join(__dirname, process.argv[2]);
+var f2 = path.join(__dirname, process.argv[3]);
+
+var tmp1 = fs.readFileSync(f1);
+var tmp2 = fs.readFileSync(f2);
+
+var tmp1_name = f1 + '.tmp';
+var tmp2_name = f2 + '.tmp';
+fs.writeFileSync(tmp1_name, JSON.stringify(JSON.parse(tmp1), null, '\t'));
+fs.writeFileSync(tmp2_name, JSON.stringify(JSON.parse(tmp2), null, '\t'));
+
+var diff = spawn('diff', ['-u', tmp1_name, tmp2_name]);
+var colordiff = spawn('colordiff');
+diff.stdout.pipe(colordiff.stdin);
+
+var data = '';
+colordiff.stdout.on('data', function(chunk) {
+  data += chunk;
+});
+colordiff.on('close', function() {
+  console.log(String(data));
+  fs.unlinkSync(tmp1_name);
+  fs.unlinkSync(tmp2_name);
+});
